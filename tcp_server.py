@@ -70,3 +70,7 @@ def start_tcp_server() -> None:
         print("connected:", addr)
         t = threading.Thread(target=handle_conn, args=(conn, addr), daemon=True)
         t.start()
+
+
+if __name__ == "__main__":
+    start_tcp_server()
