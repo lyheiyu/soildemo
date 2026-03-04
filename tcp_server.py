@@ -13,13 +13,20 @@ PORT = 5000
 
 
 def handle_conn(conn: socket.socket, addr) -> None:
-    conn.settimeout(30)
+    conn.settimeout(120)
     parser = FEParser()
-
+    print("connected:", addr, flush=True)
+    try:
+        conn.sendall(b"\x00")
+        print("sent probe 00", flush=True)
+    except Exception as e:
+        print("probe send failed:", repr(e), flush=True)
     try:
         while True:
             data = conn.recv(4096)
             print(f"recv {len(data)} bytes from {addr}")
+            if data:
+                print("head:", data[:16].hex(), flush=True)
             if data:
                 print("head:", data[:16].hex())
             if not data:
