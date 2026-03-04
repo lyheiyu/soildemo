@@ -90,18 +90,16 @@ def decode_1001_templates(payload: bytes) -> Dict[str, Any]:
     return out
 
 
-def decode_1002_value(payload: bytes) -> Optional[Dict[str, Any]]:
-    """
-    Your sample:
-      length = 0x0007
-      payload = code(2) + flag(1) + float(4 little-endian)
-      e.g. 00 19 0e 75 00 dc 41
-    """
-    if len(payload) != 7:
+def decode_1002_value(payload: bytes):
+    # Expect: 00 00 | code(2) | flag(1) | value(float32 little-endian)
+    if payload is None:
+        return None
+    if len(payload) < 9:
         return None
 
-    code = int.from_bytes(payload[0:2], "big")
-    flag = payload[2]
-    value = struct.unpack("<f", payload[3:7])[0]
+    # Many samples: payload[0:2] == b"\x00\x00"
+    code = int.from_bytes(payload[2:4], "big")   # 00 1A -> 0x001A
+    flag = payload[4]
+    value = struct.unpack("<f", payload[5:9])[0] # little-endian float32
 
-    return {"code": code, "flag": flag, "value": float(value)}
+    return {"code": code, "value": float(value), "flag": int(flag)}
