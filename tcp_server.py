@@ -47,7 +47,6 @@ def handle_conn(conn: socket.socket, addr) -> None:
 
                     print(f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
                           flush=True)
-
                     v = decode_1002_value(fr.payload)
                     if v:
                         insert_measurement(fr.device_id, v["code"], v["value"], v["flag"])
