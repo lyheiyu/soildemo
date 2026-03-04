@@ -90,16 +90,42 @@ def decode_1001_templates(payload: bytes) -> Dict[str, Any]:
     return out
 
 
+# def decode_1002_value(payload: bytes) -> Optional[Dict[str, Any]]:
+#     """
+#     Your sample:
+#       length = 0x0007
+#       payload = code(2) + flag(1) + float(4 little-endian)
+#       e.g. 00 19 0e 75 00 dc 41
+#     """
+#     if len(payload) != 7:
+#         return None
+#
+#     code = int.from_bytes(payload[0:2], "big")
+#     flag = payload[2]
+#     value = struct.unpack("<f", payload[3:7])[0]
+#
+#     return {"code": code, "flag": flag, "value": float(value)}
+
 def decode_1002_value(payload: bytes):
-    # Expect: 00 00 | code(2) | flag(1) | value(float32 little-endian)
-    if payload is None:
-        return None
-    if len(payload) < 9:
+    if not payload:
         return None
 
-    # Many samples: payload[0:2] == b"\x00\x00"
-    code = int.from_bytes(payload[2:4], "big")   # 00 1A -> 0x001A
-    flag = payload[4]
-    value = struct.unpack("<f", payload[5:9])[0] # little-endian float32
+    # Common layout we observed:
+    # 00 00 | code(2, big-endian) | flag(1) | value(2, little-endian)
+    if len(payload) == 7:
+        code = int.from_bytes(payload[2:4], "big")     # 00 1c -> 0x001c
+        flag = payload[4]
+        raw = int.from_bytes(payload[5:7], "little", signed=True)  # 75 00 -> 117
+        # default scale guess: 0.1 (you can refine per code later)
+        value = raw / 10.0
+        return {"code": code, "value": float(value), "flag": int(flag), "raw": int(raw)}
 
-    return {"code": code, "value": float(value), "flag": int(flag)}
+    # If later we meet float32 layout:
+    # 00 00 | code(2, big) | flag(1) | float32(4, little)
+    if len(payload) >= 9:
+        code = int.from_bytes(payload[2:4], "big")
+        flag = payload[4]
+        value = struct.unpack("<f", payload[5:9])[0]
+        return {"code": code, "value": float(value), "flag": int(flag)}
+
+    return None
