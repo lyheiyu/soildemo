@@ -1,39 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-    <title>Sensor Dashboard</title>
-    <style>
-        body { font-family: Arial; margin:40px;}
-        table { border-collapse: collapse; width: 600px;}
-        th, td { border:1px solid #ccc; padding:8px; text-align:center;}
-        th { background:#eee;}
-    </style>
+  <meta charset="utf-8" />
+  <title>Sensor Dashboard</title>
+  <meta http-equiv="refresh" content="5">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; }
+    .row { display: flex; gap: 18px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; flex: 1; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+    .muted { color: #777; font-size: 12px; }
+    select { padding: 6px; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
 </head>
-
 <body>
+  <h2>Sensor Dashboard</h2>
+  <div class="muted">Web:8000 | TCP ingest:5000 | Auto refresh: 5s</div>
 
-<h2>Sensor Data</h2>
+  <div style="margin: 12px 0;">
+    <form method="get" action="/">
+      <label>Device:</label>
+      <select name="device_id" onchange="this.form.submit()">
+        {% for d in devices %}
+          <option value="{{ d }}" {% if d == device_id %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+      {% if not devices %}
+        <span class="muted">No device yet. Waiting for TCP data...</span>
+      {% endif %}
+    </form>
+  </div>
 
-<table>
-<tr>
-<th>Device</th>
-<th>Temperature</th>
-<th>Humidity</th>
-<th>PH</th>
-<th>Time</th>
-</tr>
+  <div class="row">
+    <div class="card">
+      <h3>Latest values per code</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Code</th>
+            <th>Value</th>
+            <th>Flag</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in latest_by_code %}
+          <tr>
+            <td>{{ r.name }}</td>
+            <td><code>{{ "0x%04X"|format(r.code) }}</code></td>
+            <td>{{ "%.4f"|format(r.value) }}</td>
+            <td>{{ r.flag }}</td>
+            <td>{{ r.ts }}</td>
+          </tr>
+          {% endfor %}
+          {% if not latest_by_code %}
+          <tr><td colspan="5" class="muted">No data for this device yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
 
-{% for row in data %}
-<tr>
-<td>{{row[0]}}</td>
-<td>{{row[1]}}</td>
-<td>{{row[2]}}</td>
-<td>{{row[3]}}</td>
-<td>{{row[4]}}</td>
-</tr>
-{% endfor %}
-
-</table>
-
+    <div class="card">
+      <h3>Latest rows (raw)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Device</th>
+            <th>Code</th>
+            <th>Value</th>
+            <th>Flag</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ts, dev, code, value, flag in latest_rows %}
+          <tr>
+            <td>{{ ts }}</td>
+            <td>{{ dev }}</td>
+            <td><code>{{ "0x%04X"|format(code) }}</code></td>
+            <td>{{ "%.4f"|format(value) }}</td>
+            <td>{{ flag }}</td>
+          </tr>
+          {% endfor %}
+          {% if not latest_rows %}
+          <tr><td colspan="5" class="muted">No measurements yet. Waiting for TCP payload...</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </body>
 </html>
