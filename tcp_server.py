@@ -42,7 +42,12 @@ def handle_conn(conn: socket.socket, addr) -> None:
                     else:
                         print(f"[1001] device={fr.device_id} bad payload len={len(fr.payload)}")
 
+
                 elif fr.ftype == 0x1002:
+
+                    print(f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
+                          flush=True)
+
                     v = decode_1002_value(fr.payload)
                     if v:
                         insert_measurement(fr.device_id, v["code"], v["value"], v["flag"])
