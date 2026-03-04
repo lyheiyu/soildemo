@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sensor Dashboard</title>
+    <style>
+        body { font-family: Arial; margin:40px;}
+        table { border-collapse: collapse; width: 600px;}
+        th, td { border:1px solid #ccc; padding:8px; text-align:center;}
+        th { background:#eee;}
+    </style>
+</head>
+
+<body>
+
+<h2>Sensor Data</h2>
+
+<table>
+<tr>
+<th>Device</th>
+<th>Temperature</th>
+<th>Humidity</th>
+<th>PH</th>
+<th>Time</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{row[0]}}</td>
+<td>{{row[1]}}</td>
+<td>{{row[2]}}</td>
+<td>{{row[3]}}</td>
+<td>{{row[4]}}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
