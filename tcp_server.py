@@ -19,6 +19,9 @@ def handle_conn(conn: socket.socket, addr) -> None:
     try:
         while True:
             data = conn.recv(4096)
+            print(f"recv {len(data)} bytes from {addr}")
+            if data:
+                print("head:", data[:16].hex())
             if not data:
                 break
 
