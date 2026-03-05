@@ -27,7 +27,9 @@ def on_startup() -> None:
     t = threading.Thread(target=start_tcp_server, daemon=True)
     t.start()
 
-
+@app.get("/health")
+def health():
+    return {"ok": True}
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request, device_id: str | None = None):
     devices = get_devices()

@@ -27,8 +27,6 @@ def handle_conn(conn: socket.socket, addr) -> None:
             print(f"recv {len(data)} bytes from {addr}")
             if data:
                 print("head:", data[:16].hex(), flush=True)
-            if data:
-                print("head:", data[:16].hex())
             if not data:
                 break
 
@@ -38,9 +36,14 @@ def handle_conn(conn: socket.socket, addr) -> None:
                     info = decode_1001_templates(fr.payload)
                     if info.get("ok"):
                         replace_templates(fr.device_id, info["templates"])
-                        print(f"[1001] device={fr.device_id} templates={info['count']} seq={fr.seq}")
+
+                        # ✅ 加在这里：把 23 个模板编号整串打印出来
+                        print(f"[1001-templates] device={fr.device_id} seq={fr.seq} templates={info['templates']}",
+                              flush=True)
+
+                        print(f"[1001] device={fr.device_id} templates={info['count']} seq={fr.seq}", flush=True)
                     else:
-                        print(f"[1001] device={fr.device_id} bad payload len={len(fr.payload)}")
+                        print(f"[1001] device={fr.device_id} bad payload len={len(fr.payload)}", flush=True)
 
 
                 elif fr.ftype == 0x1002:

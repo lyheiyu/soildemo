@@ -110,22 +110,16 @@ def decode_1002_value(payload: bytes):
     if not payload:
         return None
 
-    # Common layout we observed:
-    # 00 00 | code(2, big-endian) | flag(1) | value(2, little-endian)
     if len(payload) == 7:
-        code = int.from_bytes(payload[2:4], "big")     # 00 1c -> 0x001c
+        code = int.from_bytes(payload[2:4], "big")
         flag = payload[4]
-        raw = int.from_bytes(payload[5:7], "little", signed=True)  # 75 00 -> 117
-        # default scale guess: 0.1 (you can refine per code later)
-        value = raw / 10.0
-        return {"code": code, "value": float(value), "flag": int(flag), "raw": int(raw)}
+        raw = int.from_bytes(payload[5:7], "little", signed=True)
+        return {"code": code, "raw": int(raw), "flag": int(flag)}
 
-    # If later we meet float32 layout:
-    # 00 00 | code(2, big) | flag(1) | float32(4, little)
     if len(payload) >= 9:
         code = int.from_bytes(payload[2:4], "big")
         flag = payload[4]
-        value = struct.unpack("<f", payload[5:9])[0]
-        return {"code": code, "value": float(value), "flag": int(flag)}
+        raw_f = struct.unpack("<f", payload[5:9])[0]
+        return {"code": code, "raw": float(raw_f), "flag": int(flag), "is_float": True}
 
     return None
