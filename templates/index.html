@@ -1,99 +1,3 @@
-<!--<!doctype html>-->
-<!--<html>-->
-<!--<head>-->
-<!--  <meta charset="utf-8" />-->
-<!--  <title>Sensor Dashboard</title>-->
-<!--  <meta http-equiv="refresh" content="5">-->
-<!--  <style>-->
-<!--    body { font-family: Arial, sans-serif; padding: 18px; }-->
-<!--    .row { display: flex; gap: 18px; }-->
-<!--    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; flex: 1; }-->
-<!--    table { border-collapse: collapse; width: 100%; }-->
-<!--    th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }-->
-<!--    .muted { color: #777; font-size: 12px; }-->
-<!--    select { padding: 6px; }-->
-<!--    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }-->
-<!--  </style>-->
-<!--</head>-->
-<!--<body>-->
-<!--  <h2>Sensor Dashboard</h2>-->
-<!--  <div class="muted">Web:8000 | TCP ingest:5000 | Auto refresh: 5s</div>-->
-
-<!--  <div style="margin: 12px 0;">-->
-<!--    <form method="get" action="/">-->
-<!--      <label>Device:</label>-->
-<!--      <select name="device_id" onchange="this.form.submit()">-->
-<!--        {% for d in devices %}-->
-<!--          <option value="{{ d }}" {% if d == device_id %}selected{% endif %}>{{ d }}</option>-->
-<!--        {% endfor %}-->
-<!--      </select>-->
-<!--      {% if not devices %}-->
-<!--        <span class="muted">No device yet. Waiting for TCP data...</span>-->
-<!--      {% endif %}-->
-<!--    </form>-->
-<!--  </div>-->
-
-<!--  <div class="row">-->
-<!--    <div class="card">-->
-<!--      <h3>Latest values per code</h3>-->
-<!--      <table>-->
-<!--        <thead>-->
-<!--          <tr>-->
-<!--            <th>Metric</th>-->
-<!--            <th>Code</th>-->
-<!--            <th>Value</th>-->
-<!--            <th>Flag</th>-->
-<!--            <th>Time</th>-->
-<!--          </tr>-->
-<!--        </thead>-->
-<!--        <tbody>-->
-<!--          {% for r in latest_by_code %}-->
-<!--          <tr>-->
-<!--            <td>{{ r.name }}</td>-->
-<!--            <td><code>{{ "0x%04X"|format(r.code) }}</code></td>-->
-<!--            <td>{{ "%.4f"|format(r.value) }}</td>-->
-<!--            <td>{{ r.flag }}</td>-->
-<!--            <td>{{ r.ts }}</td>-->
-<!--          </tr>-->
-<!--          {% endfor %}-->
-<!--          {% if not latest_by_code %}-->
-<!--          <tr><td colspan="5" class="muted">No data for this device yet.</td></tr>-->
-<!--          {% endif %}-->
-<!--        </tbody>-->
-<!--      </table>-->
-<!--    </div>-->
-
-<!--    <div class="card">-->
-<!--      <h3>Latest rows (raw)</h3>-->
-<!--      <table>-->
-<!--        <thead>-->
-<!--          <tr>-->
-<!--            <th>Time</th>-->
-<!--            <th>Device</th>-->
-<!--            <th>Code</th>-->
-<!--            <th>Value</th>-->
-<!--            <th>Flag</th>-->
-<!--          </tr>-->
-<!--        </thead>-->
-<!--        <tbody>-->
-<!--          {% for ts, dev, code, value, flag in latest_rows %}-->
-<!--          <tr>-->
-<!--            <td>{{ ts }}</td>-->
-<!--            <td>{{ dev }}</td>-->
-<!--            <td><code>{{ "0x%04X"|format(code) }}</code></td>-->
-<!--            <td>{{ "%.4f"|format(value) }}</td>-->
-<!--            <td>{{ flag }}</td>-->
-<!--          </tr>-->
-<!--          {% endfor %}-->
-<!--          {% if not latest_rows %}-->
-<!--          <tr><td colspan="5" class="muted">No measurements yet. Waiting for TCP payload...</td></tr>-->
-<!--          {% endif %}-->
-<!--        </tbody>-->
-<!--      </table>-->
-<!--    </div>-->
-<!--  </div>-->
-<!--</body>-->
-<!--</html>-->
 <!doctype html>
 <html>
 <head>
@@ -112,65 +16,37 @@
 
     h2 { margin-bottom: 4px; }
 
-    .muted {
-      color: #777;
-      font-size: 12px;
-    }
+    .muted { color: #777; font-size: 12px; }
 
-    .row {
-      display: flex;
-      gap: 18px;
-      margin-top: 14px;
-    }
+    .row { display: flex; gap: 18px; margin-top: 14px; }
 
     .card {
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 12px;
-      background: white;
+      background: #fff;
       flex: 1;
     }
 
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
+    table { border-collapse: collapse; width: 100%; }
 
     th, td {
       border-bottom: 1px solid #eee;
       padding: 8px;
       text-align: left;
+      vertical-align: top;
     }
 
-    th {
-      background: #f8f8f8;
-    }
+    th { background: #f8f8f8; }
 
-    td.num {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.center { text-align: center; }
 
-    td.center {
-      text-align: center;
-    }
+    select { padding: 6px; }
 
-    select {
-      padding: 6px;
-    }
+    code { background: #f2f2f2; padding: 2px 6px; border-radius: 6px; }
 
-    code {
-      background: #f2f2f2;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-
-    .kpi {
-      display: flex;
-      gap: 12px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
+    .kpi { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
 
     .kpi-box {
       border: 1px solid #eee;
@@ -180,228 +56,168 @@
       min-width: 160px;
     }
 
-    .kpi-title {
-      font-size: 12px;
-      color: #666;
-    }
+    .kpi-title { font-size: 12px; color: #666; }
+    .kpi-value { font-size: 16px; font-weight: bold; }
 
-    .kpi-value {
-      font-size: 16px;
-      font-weight: bold;
-    }
+    .status-online { color: green; font-weight: 600; }
+    .status-stale { color: orange; font-weight: 600; }
+    .status-offline { color: red; font-weight: 600; }
   </style>
 </head>
 
 <body>
 
-<h2>Sensor Dashboard</h2>
-<div class="muted">
-  Web server: 8000 | TCP ingest: 5000 | Auto refresh: 5 seconds
-</div>
+  <h2>Sensor Dashboard</h2>
+  <div class="muted">Web server: 8000 | TCP ingest: 5000 | Auto refresh: 5 seconds</div>
 
-<div style="margin: 12px 0;">
-  <form method="get" action="/">
-    <label>Device:</label>
-
-    <select name="device_id" onchange="this.form.submit()">
-      {% for d in devices %}
-        <option value="{{ d }}" {% if d == device_id %}selected{% endif %}>
-          {{ d }}
-        </option>
-      {% endfor %}
-    </select>
-
-    {% if not devices %}
-      <span class="muted">No device connected yet. Waiting for TCP data...</span>
-    {% endif %}
-  </form>
-</div>
-
-
-<div class="card">
-  <h3>System Overview</h3>
-
-  <div class="kpi">
-
-    <div class="kpi-box">
-      <div class="kpi-title">Total Devices</div>
-      <div class="kpi-value">{{ devices|length }}</div>
-    </div>
-
-    <div class="kpi-box">
-      <div class="kpi-title">Selected Device</div>
-      <div class="kpi-value">
-        {% if device_id %}
-          {{ device_id }}
-        {% else %}
-          --
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="kpi-box">
-      <div class="kpi-title">Sensor Codes</div>
-      <div class="kpi-value">{{ latest_by_code|length }}</div>
-    </div>
-
-    <div class="kpi-box">
-      <div class="kpi-title">Latest Update</div>
-      <div class="kpi-value">
-        {% if latest_rows and latest_rows[0] %}
-          {{ latest_rows[0][0] }}
-        {% else %}
-          --
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <div class="muted" style="margin-top:10px">
-    This page automatically refreshes every 5 seconds.
-  </div>
-</div>
-
-
-<div class="row">
-
-  <div class="card">
-
-    <h3>Latest Values per Sensor Code</h3>
-
-    <table>
-
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>Code</th>
-          <th style="text-align:right">Value</th>
-          <th>Flag</th>
-          <th>Timestamp</th>
-        </tr>
-      </thead>
-
-      <tbody>
-
-        {% for r in latest_by_code %}
-
-        <tr>
-          <td>{{ r.name }}{% if r.unit %} ({{ r.unit }}){% endif %}</td>
-
-          <td>
-            <code>{{ "0x%04X"|format(r.code) }}</code>
-          </td>
-
-          <td class="num">
-            {{ "%.4f"|format(r.value) }}
-          </td>
-
-          <td class="center">
-            {{ r.flag }}
-          </td>
-
-          <td>
-            {{ r.ts }}
-          </td>
-
-        </tr>
-
+  <div style="margin: 12px 0;">
+    <form method="get" action="/">
+      <label>Device:</label>
+      <select name="device_id" onchange="this.form.submit()">
+        {% for d in devices %}
+          <option value="{{ d }}" {% if d == device_id %}selected{% endif %}>{{ d }}</option>
         {% endfor %}
+      </select>
 
-        {% if not latest_by_code %}
-        <tr>
-          <td colspan="5" class="muted">
-            No sensor data available for this device yet.
-          </td>
-        </tr>
-        {% endif %}
-
-      </tbody>
-
-    </table>
-
+      {% if not devices %}
+        <span class="muted">No device connected yet. Waiting for TCP data...</span>
+      {% endif %}
+    </form>
   </div>
-
-
 
   <div class="card">
+    <h3>System Overview</h3>
 
-    <h3>Latest Values per Sensor Code</h3>
+    <div class="kpi">
+      <div class="kpi-box">
+        <div class="kpi-title">Total Devices</div>
+        <div class="kpi-value">{{ devices|length }}</div>
+      </div>
 
-<table>
+      <div class="kpi-box">
+        <div class="kpi-title">Selected Device</div>
+        <div class="kpi-value">{{ device_id if device_id else "--" }}</div>
+      </div>
 
-  <thead>
-    <tr>
-      <th>Metric</th>
-      <th>Code</th>
-      <th style="text-align:right">Value</th>
-      <th>Status</th>
-      <th>Flag</th>
-      <th>Timestamp</th>
-    </tr>
-  </thead>
+      <div class="kpi-box">
+        <div class="kpi-title">Sensor Codes</div>
+        <div class="kpi-value">{{ latest_by_code|length }}</div>
+      </div>
 
-  <tbody>
+      <div class="kpi-box">
+        <div class="kpi-title">Latest Update</div>
+        <div class="kpi-value">
+          {% if latest_rows and latest_rows|length > 0 %}
+            {{ latest_rows[0][0] }}
+          {% else %}
+            --
+          {% endif %}
+        </div>
+      </div>
+    </div>
 
-    {% for r in latest_by_code %}
-
-    <tr>
-      <td>{{ r.name }}{% if r.unit %} ({{ r.unit }}){% endif %}</td>
-
-      <td>
-        <code>{{ "0x%04X"|format(r.code) }}</code>
-      </td>
-
-      <td class="num">
-        {% if r.value is none %}
-          --
-        {% else %}
-          {{ "%.4f"|format(r.value) }}
-        {% endif %}
-      </td>
-
-      <td class="center">
-        {% if r.status is defined %}
-          {{ r.status }}
-        {% else %}
-          --
-        {% endif %}
-      </td>
-
-      <td class="center">
-        {% if r.flag is none %}
-          --
-        {% else %}
-          {{ r.flag }}
-        {% endif %}
-      </td>
-
-      <td>
-        {% if r.ts is none %}
-          --
-        {% else %}
-          {{ r.ts }}
-        {% endif %}
-      </td>
-    </tr>
-
-    {% endfor %}
-
-    {% if not latest_by_code %}
-    <tr>
-      <td colspan="6" class="muted">
-        No sensor data available for this device yet.
-      </td>
-    </tr>
-    {% endif %}
-
-  </tbody>
-
-</table>
-
+    <div class="muted" style="margin-top:10px">
+      This page automatically refreshes every 5 seconds.
+    </div>
   </div>
 
-</div>
+  <div class="row">
+
+    <!-- Left: Latest per code -->
+    <div class="card">
+      <h3>Latest Values per Sensor Code</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Code</th>
+            <th style="text-align:right">Value</th>
+            <th class="center">Status</th>
+            <th class="center">Flag</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in latest_by_code %}
+          <tr>
+            <td>{{ r.name }}{% if r.unit %} ({{ r.unit }}){% endif %}</td>
+            <td><code>{{ "0x%04X"|format(r.code) }}</code></td>
+
+            <td class="num">
+              {% if r.value is none %}--{% else %}{{ "%.4f"|format(r.value) }}{% endif %}
+            </td>
+
+            <td class="center">
+              {% if r.status == "Online" %}
+                <span class="status-online">Online</span>
+              {% elif r.status == "Stale" %}
+                <span class="status-stale">Stale</span>
+              {% elif r.status == "Offline" %}
+                <span class="status-offline">Offline</span>
+              {% else %}
+                --
+              {% endif %}
+            </td>
+
+            <td class="center">
+              {% if r.flag is none %}--{% else %}{{ r.flag }}{% endif %}
+            </td>
+
+            <td>{% if r.ts is none %}--{% else %}{{ r.ts }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+
+          {% if not latest_by_code %}
+          <tr>
+            <td colspan="6" class="muted">No sensor data available for this device yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Right: Latest raw rows -->
+    <div class="card">
+      <h3>Latest Rows (raw)</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Device</th>
+            <th>Code</th>
+            <th style="text-align:right">Value</th>
+            <th class="center">Flag</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for ts, dev, code, value, flag in latest_rows %}
+          <tr>
+            <td>{{ ts }}</td>
+            <td>{{ dev }}</td>
+            <td><code>{{ "0x%04X"|format(code) }}</code></td>
+            <td class="num">
+              {% if value is none %}--{% else %}{{ "%.4f"|format(value) }}{% endif %}
+            </td>
+            <td class="center">
+              {% if flag is none %}--{% else %}{{ flag }}{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% if not latest_rows %}
+          <tr>
+            <td colspan="5" class="muted">No measurements yet. Waiting for TCP payload...</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
 
 </body>
 </html>
