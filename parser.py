@@ -106,20 +106,23 @@ def decode_1001_templates(payload: bytes) -> Dict[str, Any]:
 #
 #     return {"code": code, "flag": flag, "value": float(value)}
 
-def decode_1002_value(payload: bytes):
+def decode_1002_values(payload: bytes):
+    """
+    Parse payload as N records of 4 bytes each: [idx(2) + raw(2)] * N
+    If payload ends with 1 checksum byte, drop it.
+    """
     if not payload:
-        return None
+        return []
 
-    if len(payload) == 7:
-        code = int.from_bytes(payload[2:4], "big")
-        flag = payload[4]
-        raw = int.from_bytes(payload[5:7], "little", signed=True)
-        return {"code": code, "raw": int(raw), "flag": int(flag)}
+    # 如果末尾有 1 字节校验，且总长度不是4的倍数，就丢掉最后1字节
+    if (len(payload) % 4) != 0:
+        payload = payload[:-1]
 
-    if len(payload) >= 9:
-        code = int.from_bytes(payload[2:4], "big")
-        flag = payload[4]
-        raw_f = struct.unpack("<f", payload[5:9])[0]
-        return {"code": code, "raw": float(raw_f), "flag": int(flag), "is_float": True}
-
-    return None
+    out = []
+    n = len(payload) // 4
+    for i in range(n):
+        chunk = payload[i * 4:(i + 1) * 4]
+        idx = int.from_bytes(chunk[0:2], "big")
+        raw = int.from_bytes(chunk[2:4], "big", signed=True)
+        out.append({"code": idx, "raw": raw, "flag": 0})
+    return out

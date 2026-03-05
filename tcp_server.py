@@ -4,7 +4,7 @@ import socket
 import threading
 from typing import Optional
 
-from parser import FEParser, decode_1001_templates, decode_1002_value
+from parser import FEParser, decode_1001_templates, decode_1002_values
 from database import insert_measurement, replace_templates
 
 
@@ -47,30 +47,25 @@ def handle_conn(conn: socket.socket, addr) -> None:
 
 
 
+
                 elif fr.ftype == 0x1002:
-                    print(
-                        f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
-                        flush=True
-                    )
-                    v = decode_1002_value(fr.payload)
-                    if not isinstance(v, dict):
+
+                    print(f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
+                          flush=True)
+
+                    items = decode_1002_values(fr.payload)
+
+                    if not items:
                         print(f"[1002] decode failed, payload_len={len(fr.payload)}", flush=True)
                         continue
-                    code = v.get("code")
-                    flag = v.get("flag", 0)
-                    # Prefer decoded value, fallback to raw/scale
-                    if "value" in v and v["value"] is not None:
-                        value = float(v["value"])
-                    elif "raw" in v and v["raw"] is not None:
-                        # default fallback scale
-                        value = float(v["raw"]) / 10.0
-                    else:
-                        print(f"[1002] missing value/raw, keys={list(v.keys())}", flush=True)
-                        continue
-                    insert_measurement(fr.device_id, int(code), float(value), int(flag))
-                    print(
-                        f"[1002] device={fr.device_id} code=0x{int(code):04x} value={value:.4f} flag=0x{int(flag):02x}",
-                        flush=True)
+                    for v in items:
+                        code = int(v["code"])
+                        raw = v["raw"]
+                        flag = int(v.get("flag", 0))
+                        # 这里的缩放先用你原来的 /10.0 兜底
+                        value = float(raw) / 10.0
+                        insert_measurement(fr.device_id, code, value, flag)
+                        print(f"[1002] device={fr.device_id} code={code} raw={raw} value={value:.4f}", flush=True)
 
     except socket.timeout:
         pass
