@@ -4,7 +4,7 @@ import socket
 import threading
 from typing import Optional
 
-from parser import FEParser, decode_1001_templates, decode_1002_values
+from parser import FEParser, decode_1001_templates, decode_1002_value
 from database import insert_measurement, replace_templates
 
 
@@ -48,25 +48,43 @@ def handle_conn(conn: socket.socket, addr) -> None:
 
 
 
+
                 elif fr.ftype == 0x1002:
 
-                    print(f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
-                          flush=True)
+                    print(
 
-                    items = decode_1002_values(fr.payload)
+                        f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
 
-                    if not items:
+                        flush=True
+
+                    )
+
+                    v = decode_1002_value(fr.payload)
+
+                    if not isinstance(v, dict):
                         print(f"[1002] decode failed, payload_len={len(fr.payload)}", flush=True)
-                        continue
-                    for v in items:
-                        code = int(v["code"])
-                        raw = v["raw"]
-                        flag = int(v.get("flag", 0))
-                        # 这里的缩放先用你原来的 /10.0 兜底
-                        value = float(raw) / 10.0
-                        insert_measurement(fr.device_id, code, value, flag)
-                        print(f"[1002] device={fr.device_id} code={code} raw={raw} value={value:.4f}", flush=True)
 
+                        continue
+
+                    code = int(v.get("code", 0))
+
+                    raw = v.get("raw")
+
+                    flag = int(v.get("flag", 0))
+
+                    if raw is None:
+                        print(f"[1002] missing raw, v={v}", flush=True)
+
+                        continue
+
+                    value = float(raw) / 10.0
+
+                    insert_measurement(fr.device_id, code, value, flag)
+
+                    print(f"[1002] device={fr.device_id} code={code} raw={raw} value={value:.4f}", flush=True)
+                elif fr.ftype == 0x1008:
+                    print(f"[1008-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
+                          flush=True)
     except socket.timeout:
         pass
     except Exception as e:
