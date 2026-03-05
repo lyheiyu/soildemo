@@ -14,6 +14,7 @@ from database import (
     get_latest_by_code,
     upsert_template_meta,
     get_template_meta_map,
+    get_templates_for_device,
 )
 from tcp_server import start_tcp_server
 
@@ -75,21 +76,30 @@ def home(request: Request, device_id: str | None = None):
     latest_rows = get_latest_measurements(limit=50)
     latest_by_code = get_latest_by_code(device_id) if device_id else []
 
-    # Load template meta map: template_id -> {name, unit, scale}
+    # template_id -> {name, unit, scale}
     meta_map = get_template_meta_map()
+
+    # ✅ 从 1001 保存的 templates 表里取出该设备模板顺序
+    device_templates = get_templates_for_device(device_id) if device_id else []
 
     latest_by_code_view = []
     for ts, dev, code, value, flag in latest_by_code:
-        template_id = CODE_TO_TEMPLATE.get(code)
+
+        # ✅ 核心：把 code 当成“传感器索引”，映射到 template_id
+        template_id = None
+        if isinstance(code, int) and 0 <= code < len(device_templates):
+            template_id = device_templates[code]
+        # 兼容：如果设备直接把 template_id 当 code 发上来
+        elif code in meta_map:
+            template_id = code
+
         meta = meta_map.get(template_id) if template_id else None
 
         name = meta["name"] if meta else f"code_0x{code:04x}"
         unit = meta["unit"] if meta else ""
         scale = meta["scale"] if meta else 1.0
 
-        # If your stored value is already scaled, keep it.
-        # If your stored value is raw, you can apply scaling here:
-        # value_view = float(value) * float(scale)
+        # 如果 value 是 raw，可以用 scale 转换；你现在先保持原样
         value_view = float(value)
 
         latest_by_code_view.append({

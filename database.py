@@ -155,3 +155,19 @@ def get_template_meta_map():
     rows = cur.fetchall()
     conn.close()
     return {tid: {"name": n, "unit": u, "scale": s} for tid, n, u, s in rows}
+def get_templates_for_device(device_id: str) -> List[int]:
+    """
+    Return template_id list for this device in the same order as received in 1001.
+    We rely on AUTOINCREMENT 'id' to preserve insertion order in replace_templates().
+    """
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT template_id
+        FROM templates
+        WHERE device_id = ?
+        ORDER BY id ASC
+    """, (device_id,))
+    rows = [r[0] for r in cur.fetchall()]
+    conn.close()
+    return rows
