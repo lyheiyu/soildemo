@@ -195,3 +195,44 @@ def get_min_code(device_id: str) -> int | None:
     if not row or row[0] is None:
         return None
     return int(row[0])
+
+def get_last_two_by_code(device_id: str) -> dict[int, list[tuple]]:
+    """
+    Return {code: [(ts, value), (ts, value)]} up to last 2 records per code.
+    """
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT code, ts, value
+        FROM measurements
+        WHERE device_id = ?
+        ORDER BY id DESC
+    """, (device_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    out: dict[int, list[tuple]] = {}
+    for code, ts, value in rows:
+        code_i = int(code)
+        out.setdefault(code_i, [])
+        if len(out[code_i]) < 2:
+            out[code_i].append((ts, float(value)))
+    return out
+def get_latest_ts_by_code(device_id: str):
+    """
+    Return {code: ts} for latest timestamp of each code.
+    """
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT code, MAX(ts)
+    FROM measurements
+    WHERE device_id = ?
+    GROUP BY code
+    """, (device_id,))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return {int(code): ts for code, ts in rows}

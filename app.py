@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
-
+from datetime import datetime
 from database import (
     init_db,
     get_latest_measurements,
@@ -16,6 +16,8 @@ from database import (
     get_template_meta_map,
     get_templates_for_device,
     get_min_code,
+    get_last_two_by_code,
+    get_latest_ts_by_code
 )
 from tcp_server import start_tcp_server
 
@@ -68,55 +70,101 @@ def health():
     return {"ok": True}
 
 
+from datetime import datetime
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request, device_id: str | None = None):
+    OFFLINE_AFTER_SECONDS = 600  # >10 min no report -> Offline
+    STALE_AFTER_SECONDS = 600    # value unchanged for >=10 min -> Stale
+    EPS = 1e-9
+
     devices = get_devices()
     if device_id is None and devices:
         device_id = devices[0]
 
     latest_rows = get_latest_measurements(limit=50)
+
+    # Latest row per code (only codes that have ever reported)
     latest_by_code = get_latest_by_code(device_id) if device_id else []
+    latest_map = {int(code): (ts, dev, int(code), float(value), flag)
+                  for ts, dev, code, value, flag in latest_by_code}
+
+    # For status judgement
+    latest_ts_map = get_latest_ts_by_code(device_id) if device_id else {}
+    last_two_map = get_last_two_by_code(device_id) if device_id else {}
 
     # template_id -> {name, unit, scale}
     meta_map = get_template_meta_map()
 
-    # ✅ 从 1001 保存的 templates 表里取出该设备模板顺序
+    # Templates list from 1001 (full sensor list)
     device_templates = get_templates_for_device(device_id) if device_id else []
     base_code = get_min_code(device_id) if device_id else None
 
-    latest_by_code_view = []
-    for ts, dev, code, value, flag in latest_by_code:
+    now = datetime.now()
 
-        # ✅ 核心：把 code 当成“传感器索引”，映射到 template_id
+    # Build the full code list so offline sensors are also shown
+    if base_code is not None and device_templates:
+        code_list = [int(base_code) + i for i in range(len(device_templates))]
+    else:
+        # fallback: only show codes that exist in DB
+        code_list = sorted(latest_map.keys())
+
+    latest_by_code_view = []
+
+    for code in code_list:
+        # Map code -> template_id
         template_id = None
-        # A) code 是带偏移的通道号，例如从 0x001B 开始
         if base_code is not None and device_templates:
             idx = int(code) - int(base_code)
             if 0 <= idx < len(device_templates):
                 template_id = device_templates[idx]
-
-        # B) 兼容：如果 code 本身就是 template_id
         if template_id is None and int(code) in meta_map:
             template_id = int(code)
 
         meta = meta_map.get(template_id) if template_id else None
-
-        name = meta["name"] if meta else f"code_0x{code:04x}"
+        name = meta["name"] if meta else f"code_0x{int(code):04x}"
         unit = meta["unit"] if meta else ""
         scale = meta["scale"] if meta else 1.0
 
-        # 如果 value 是 raw，可以用 scale 转换；你现在先保持原样
-        value_view = float(value)
+        # value/ts from DB (may be missing)
+        row = latest_map.get(int(code))
+        if row:
+            ts, dev, _, value, flag = row
+            value_view = float(value)  # you currently store raw, keep as-is
+        else:
+            ts, dev, value_view, flag = None, device_id, None, None
+
+        # Status: Offline / Online / Stale
+        status = "Offline"
+        ts_str = latest_ts_map.get(int(code))
+        if ts_str:
+            last_dt = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
+            age = (now - last_dt).total_seconds()
+
+            if age <= OFFLINE_AFTER_SECONDS:
+                status = "Online"
+
+                last_two = last_two_map.get(int(code), [])
+                if len(last_two) >= 2:
+                    ts1, v1 = last_two[0]
+                    ts2, v2 = last_two[1]
+                    dt2 = datetime.strptime(ts2, "%Y-%m-%d %H:%M:%S")
+                    stable_for = (now - dt2).total_seconds()
+
+                    if abs(v1 - v2) <= EPS and stable_for >= STALE_AFTER_SECONDS:
+                        status = "Stale"
 
         latest_by_code_view.append({
             "ts": ts,
             "device_id": dev,
-            "code": code,
+            "code": int(code),
             "template_id": template_id,
             "name": name,
             "unit": unit,
+            "scale": scale,
             "value": value_view,
             "flag": flag,
+            "status": status,
         })
 
     return templates.TemplateResponse(
