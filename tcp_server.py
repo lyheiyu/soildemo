@@ -46,23 +46,31 @@ def handle_conn(conn: socket.socket, addr) -> None:
                         print(f"[1001] device={fr.device_id} bad payload len={len(fr.payload)}", flush=True)
 
 
+
                 elif fr.ftype == 0x1002:
-
-                    print(f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
-                          flush=True)
+                    print(
+                        f"[1002-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
+                        flush=True
+                    )
                     v = decode_1002_value(fr.payload)
-                    if v:
-                        insert_measurement(fr.device_id, v["code"], v["value"], v["flag"])
-                        print(f"[1002] device={fr.device_id} code=0x{v['code']:04x} value={v['value']:.4f} flag=0x{v['flag']:02x}")
+                    if not isinstance(v, dict):
+                        print(f"[1002] decode failed, payload_len={len(fr.payload)}", flush=True)
+                        continue
+                    code = v.get("code")
+                    flag = v.get("flag", 0)
+                    # Prefer decoded value, fallback to raw/scale
+                    if "value" in v and v["value"] is not None:
+                        value = float(v["value"])
+                    elif "raw" in v and v["raw"] is not None:
+                        # default fallback scale
+                        value = float(v["raw"]) / 10.0
                     else:
-                        print(f"[1002] device={fr.device_id} unexpected payload len={len(fr.payload)}")
-
-                elif fr.ftype == 0x1008:
-                    # 暂时只记录有 1008 到来，后续你给我更多样本我再写完整解析
-                    print(f"[1008] device={fr.device_id} payload_len={len(fr.payload)} seq={fr.seq}")
-
-                else:
-                    print(f"[????] device={fr.device_id} ftype=0x{fr.ftype:04x} payload_len={len(fr.payload)} seq={fr.seq}")
+                        print(f"[1002] missing value/raw, keys={list(v.keys())}", flush=True)
+                        continue
+                    insert_measurement(fr.device_id, int(code), float(value), int(flag))
+                    print(
+                        f"[1002] device={fr.device_id} code=0x{int(code):04x} value={value:.4f} flag=0x{int(flag):02x}",
+                        flush=True)
 
     except socket.timeout:
         pass

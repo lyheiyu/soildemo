@@ -134,7 +134,7 @@ def get_devices() -> List[str]:
 def upsert_template_meta(rows):
     # rows: list of (template_id, name, unit, scale)
     import sqlite3
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB)
     cur = conn.cursor()
     cur.executemany("""
     INSERT INTO template_meta (template_id, name, unit, scale)
@@ -149,7 +149,7 @@ def upsert_template_meta(rows):
 
 def get_template_meta_map():
     import sqlite3
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB)
     cur = conn.cursor()
     cur.execute("SELECT template_id, name, unit, scale FROM template_meta")
     rows = cur.fetchall()
