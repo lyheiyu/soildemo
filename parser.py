@@ -128,12 +128,23 @@ def decode_1001_templates(payload: bytes) -> Dict[str, Any]:
 #     return out
 
 def decode_1002_value(payload: bytes):
+    """
+    1002 payload format (observed):
+    2B reserved
+    2B sensor code
+    2B raw value
+    1B checksum/flag
+    """
+
     if len(payload) != 7:
         return None
 
-    a = int.from_bytes(payload[0:2], "big")
-    b = int.from_bytes(payload[2:4], "big")
-    c = int.from_bytes(payload[4:6], "big", signed=True)
-    chk = payload[6]
+    code = int.from_bytes(payload[2:4], "big")
+    raw = int.from_bytes(payload[4:6], "big", signed=True)
+    flag = payload[6]
 
-    return {"a": a, "b": b, "c": c, "chk": chk}
+    return {
+        "code": code,
+        "raw": raw,
+        "flag": flag
+    }

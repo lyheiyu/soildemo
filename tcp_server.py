@@ -49,6 +49,7 @@ def handle_conn(conn: socket.socket, addr) -> None:
 
 
 
+
                 elif fr.ftype == 0x1002:
 
                     print(
@@ -77,11 +78,19 @@ def handle_conn(conn: socket.socket, addr) -> None:
 
                         continue
 
-                    value = float(raw) / 10.0
+                    # 这里改这一行
+
+                    value = float(raw)
 
                     insert_measurement(fr.device_id, code, value, flag)
 
-                    print(f"[1002] device={fr.device_id} code={code} raw={raw} value={value:.4f}", flush=True)
+                    print(
+
+                        f"[1002] device={fr.device_id} code={code} raw={raw} value={value:.4f}",
+
+                        flush=True
+
+                    )
                 elif fr.ftype == 0x1008:
                     print(f"[1008-raw] device={fr.device_id} payload_len={len(fr.payload)} hex={fr.payload.hex()}",
                           flush=True)
