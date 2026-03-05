@@ -15,6 +15,7 @@ from database import (
     upsert_template_meta,
     get_template_meta_map,
     get_templates_for_device,
+    get_min_code,
 )
 from tcp_server import start_tcp_server
 
@@ -81,17 +82,22 @@ def home(request: Request, device_id: str | None = None):
 
     # ✅ 从 1001 保存的 templates 表里取出该设备模板顺序
     device_templates = get_templates_for_device(device_id) if device_id else []
+    base_code = get_min_code(device_id) if device_id else None
 
     latest_by_code_view = []
     for ts, dev, code, value, flag in latest_by_code:
 
         # ✅ 核心：把 code 当成“传感器索引”，映射到 template_id
         template_id = None
-        if isinstance(code, int) and 0 <= code < len(device_templates):
-            template_id = device_templates[code]
-        # 兼容：如果设备直接把 template_id 当 code 发上来
-        elif code in meta_map:
-            template_id = code
+        # A) code 是带偏移的通道号，例如从 0x001B 开始
+        if base_code is not None and device_templates:
+            idx = int(code) - int(base_code)
+            if 0 <= idx < len(device_templates):
+                template_id = device_templates[idx]
+
+        # B) 兼容：如果 code 本身就是 template_id
+        if template_id is None and int(code) in meta_map:
+            template_id = int(code)
 
         meta = meta_map.get(template_id) if template_id else None
 
