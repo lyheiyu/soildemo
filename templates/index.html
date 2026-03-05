@@ -286,7 +286,7 @@
         {% for r in latest_by_code %}
 
         <tr>
-          <td>{{ r.name }}</td>
+          <td>{{ r.name }}{% if r.unit %} ({{ r.unit }}){% endif %}</td>
 
           <td>
             <code>{{ "0x%04X"|format(r.code) }}</code>

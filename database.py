@@ -9,6 +9,26 @@ DB = "sensor.db"
 def init_db() -> None:
     conn = sqlite3.connect(DB)
     cur = conn.cursor()
+    # database.py (inside init_db)
+    cur.execute("""
+                CREATE TABLE IF NOT EXISTS template_meta
+                (
+                    template_id
+                    INTEGER
+                    PRIMARY
+                    KEY,
+                    name
+                    TEXT
+                    NOT
+                    NULL,
+                    unit
+                    TEXT,
+                    scale
+                    REAL
+                    DEFAULT
+                    1.0
+                )
+                """)
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS measurements (
@@ -111,3 +131,27 @@ def get_devices() -> List[str]:
     rows = [r[0] for r in cur.fetchall()]
     conn.close()
     return rows
+def upsert_template_meta(rows):
+    # rows: list of (template_id, name, unit, scale)
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.executemany("""
+    INSERT INTO template_meta (template_id, name, unit, scale)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(template_id) DO UPDATE SET
+      name=excluded.name,
+      unit=excluded.unit,
+      scale=excluded.scale
+    """, rows)
+    conn.commit()
+    conn.close()
+
+def get_template_meta_map():
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT template_id, name, unit, scale FROM template_meta")
+    rows = cur.fetchall()
+    conn.close()
+    return {tid: {"name": n, "unit": u, "scale": s} for tid, n, u, s in rows}
